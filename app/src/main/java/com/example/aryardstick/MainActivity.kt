@@ -20,9 +20,7 @@ import com.google.ar.sceneform.ArSceneView
 import com.google.ar.sceneform.Node
 import com.google.ar.sceneform.math.Vector3
 import com.google.ar.sceneform.rendering.MaterialFactory
-import com.google.ar.sceneform.rendering.ModelRenderable
 import com.google.ar.sceneform.rendering.ShapeFactory
-import com.google.ar.sceneform.ux.ArFragment
 import kotlin.math.sqrt
 
 class MainActivity : AppCompatActivity() {
@@ -214,18 +212,15 @@ class MainActivity : AppCompatActivity() {
         
         anchorNodes.add(anchorNode)
         
-        // Calculate distance from reference line
-        if (anchorNodes.isNotEmpty()) {
-            // For simplicity, we'll measure from the first point of the reference
+        // Calculate distance between consecutive points (using reference line for estimation)
+        if (anchorNodes.size >= 2) {
+            val lastTwo = anchorNodes.takeLast(2)
             val distance = calculateDistance(
-                anchorNodes[0].worldPosition,
-                Vector3(
-                    anchorNodes[0].worldPosition.x + STANDARD_REFERENCE_LENGTH,
-                    anchorNodes[0].worldPosition.y,
-                    anchorNodes[0].worldPosition.z
-                )
+                lastTwo[0].worldPosition,
+                lastTwo[1].worldPosition
             )
             showMeasurement(distance)
+            drawLine(lastTwo[0].worldPosition, lastTwo[1].worldPosition)
         }
     }
 
