@@ -61,14 +61,14 @@
         android:background="#AA000000"
         android:padding="8dp" />
 
-    <!-- Measurement display with high contrast and 12pt font -->
+    <!-- Measurement display with high contrast and 12pt font (16sp) -->
     <TextView
         android:id="@+id/measurementText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
         android:textColor="#FFFFFF"
-        android:textSize="12pt"
+        android:textSize="16sp"
         android:textStyle="bold"
         android:background="#FF000000"
         android:padding="12dp"

@@ -79,6 +79,9 @@
 ### Build Status
 The application structure is complete and ready to build. Due to network restrictions in the current environment, the full Gradle build cannot be completed. However, all code and configuration files are in place and the app will build successfully in a standard Android development environment with internet access to Google's Maven repository.
 
+### Launcher Icons
+The current launcher icons are XML placeholders. For production use, replace these with proper PNG/WebP bitmap files in the appropriate mipmap folders (mdpi, hdpi, xhdpi, xxhdpi, xxxhdpi). Android Asset Studio can be used to generate proper icon sets.
+
 ### Testing Recommendations
 1. Build the APK in Android Studio
 2. Install on ARCore-supported device
@@ -86,7 +89,7 @@ The application structure is complete and ready to build. Due to network restric
 4. Test Standard mode with the reference line
 5. Verify mode switching works smoothly
 6. Confirm navigation bar remains visible
-7. Verify measurement text is high contrast and 12pt
+7. Verify measurement text is high contrast and properly sized (16sp ≈ 12pt)
 
 ### Known Limitations
 - Requires ARCore-supported hardware
