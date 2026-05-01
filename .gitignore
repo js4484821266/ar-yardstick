@@ -1,18 +1,18 @@
-# Public-safe repository hygiene.
-# Keep source, docs, Gradle build scripts, and Gradle Wrapper files committed.
+# 공개 저장소에 안전한 파일 관리.
+# 소스, 문서, Gradle 빌드 스크립트, Gradle Wrapper 파일은 커밋 상태로 유지합니다.
 !gradlew
 !gradlew.bat
 !gradle/wrapper/gradle-wrapper.properties
 !gradle/wrapper/gradle-wrapper.jar
 
-# Local machine configuration.
+# 로컬 머신 설정.
 local.properties
 .env
 .env.*
 LOCAL_BUILD.md
 *.local
 
-# Signing material and release secrets.
+# 서명 자료와 릴리스 비밀값.
 *.jks
 *.keystore
 *.p12
@@ -30,14 +30,14 @@ keys.properties
 *secret*
 *token*
 
-# Gradle and Android generated outputs.
+# Gradle 및 Android 생성 산출물.
 .gradle/
 build/
 **/build/
 captures/
 generated/
 
-# IDE/user-specific files.
+# IDE/사용자별 파일.
 .idea/
 *.iml
 .vscode/
@@ -46,5 +46,5 @@ generated/
 .DS_Store
 Thumbs.db
 
-# ignore prompts
+# 프롬프트 기록은 커밋하지 않습니다.
 prompts/*

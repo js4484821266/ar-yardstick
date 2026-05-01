@@ -55,7 +55,7 @@ class ArSessionManager(
     private val renderer = ArRenderer(activity, listener)
     private var session: Session? = null
     private var installRequested = false
-    private var startupStage = "idle"
+    private var startupStage = "대기 중"
 
     init {
         surfaceView.preserveEGLContextOnPause = true
@@ -70,32 +70,32 @@ class ArSessionManager(
 
     fun onResume() {
         if (!PermissionUtils.hasCameraPermission(activity)) {
-            listener.onTapFailure("Camera permission missing.")
+            listener.onTapFailure("카메라 권한이 없습니다.")
             return
         }
 
         try {
             if (session == null) {
-                reportStartupStage("Checking ARCore install")
+                reportStartupStage("ARCore 설치 확인 중")
                 when (ArCoreApk.getInstance().requestInstall(activity, !installRequested)) {
                     ArCoreApk.InstallStatus.INSTALL_REQUESTED -> {
                         installRequested = true
-                        listener.onSessionMessage("Google Play Services for AR installation requested.")
+                        listener.onSessionMessage("Google Play Services for AR 설치를 요청했습니다.")
                         return
                     }
                     ArCoreApk.InstallStatus.INSTALLED -> Unit
                 }
 
-                reportStartupStage("Creating AR session")
+                reportStartupStage("AR 세션 생성 중")
                 val newSession = Session(activity)
                 session = newSession
-                reportStartupStage("Configuring minimal AR session")
+                reportStartupStage("최소 AR 세션 설정 중")
                 val config = ArConfig(newSession).apply {
                     planeFindingMode = ArConfig.PlaneFindingMode.HORIZONTAL_AND_VERTICAL
                     updateMode = ArConfig.UpdateMode.BLOCKING
                     focusMode = ArConfig.FocusMode.FIXED
-                    // Depth is useful, but optional. Keep it off for the base app because
-                    // some ARCore-supported devices fail session startup with depth enabled.
+                    // Depth는 유용하지만 선택 기능이다. 일부 ARCore 지원 기기에서
+                    // depth 활성화 시 세션 시작이 실패해서 기본 앱에서는 꺼 둔다.
                     depthMode = ArConfig.DepthMode.DISABLED
                     lightEstimationMode = ArConfig.LightEstimationMode.DISABLED
                 }
@@ -103,33 +103,33 @@ class ArSessionManager(
                 renderer.setSession(newSession)
             }
 
-            reportStartupStage("Starting AR camera session")
+            reportStartupStage("AR 카메라 세션 시작 중")
             session?.resume()
-            reportStartupStage("Resuming AR view")
+            reportStartupStage("AR 화면 재개 중")
             surfaceView.onResume()
-            startupStage = "AR camera session started"
-            listener.onSessionMessage("Move the phone slowly until ARCore detects a plane.")
+            startupStage = "AR 카메라 세션 시작됨"
+            listener.onSessionMessage("ARCore가 평면을 찾을 때까지 휴대폰을 천천히 움직이세요.")
         } catch (error: UnavailableArcoreNotInstalledException) {
-            listener.onSessionUnsupported("ARCore is not installed on this device.")
+            listener.onSessionUnsupported("이 기기에 ARCore가 설치되어 있지 않습니다.")
         } catch (error: UnavailableUserDeclinedInstallationException) {
-            listener.onSessionUnsupported("ARCore installation was declined.")
+            listener.onSessionUnsupported("ARCore 설치가 취소되었습니다.")
         } catch (error: UnavailableApkTooOldException) {
-            listener.onSessionUnsupported("Google Play Services for AR is too old.")
+            listener.onSessionUnsupported("Google Play Services for AR 버전이 너무 오래되었습니다.")
         } catch (error: UnavailableSdkTooOldException) {
-            listener.onSessionUnsupported("This app's ARCore SDK is too old for the installed service.")
+            listener.onSessionUnsupported("앱의 ARCore SDK가 설치된 서비스에 비해 너무 오래되었습니다.")
         } catch (error: UnavailableDeviceNotCompatibleException) {
-            listener.onSessionUnsupported("ARCore is unavailable on this device.")
+            listener.onSessionUnsupported("이 기기에서는 ARCore를 사용할 수 없습니다.")
         } catch (error: CameraNotAvailableException) {
-            listener.onTapFailure("Camera is not available. Close other camera apps and try again.")
+            listener.onTapFailure("카메라를 사용할 수 없습니다. 다른 카메라 앱을 닫고 다시 시도하세요.")
         } catch (error: FatalException) {
             closeSessionAfterFailure()
-            val cause = error.message?.let { " Detail: $it" } ?: ""
+            val cause = error.message?.let { " 세부 정보: $it" } ?: ""
             listener.onTapFailure(
-                "ARCore failed during: $startupStage. Tap Retry AR, update Google Play Services for AR, and make sure no other app is using the camera.$cause"
+                "ARCore 실패 단계: $startupStage. AR 재시도를 누르거나 Google Play Services for AR을 업데이트하고, 다른 앱이 카메라를 사용 중이 아닌지 확인하세요.$cause"
             )
         } catch (error: Throwable) {
             closeSessionAfterFailure()
-            listener.onTapFailure("Failed during: $startupStage. ${error.message ?: error.javaClass.simpleName}")
+            listener.onTapFailure("실패 단계: $startupStage. ${error.message ?: error.javaClass.simpleName}")
         }
     }
 
@@ -228,11 +228,11 @@ class ArSessionManager(
                 post { listener.onFrame(snapshot) }
                 processTaps(frame, camera, snapshot)
             } catch (error: SessionPausedException) {
-                // Session not yet resumed, skip this frame
+                // 아직 세션이 재개되지 않았으므로 이번 프레임은 건너뛴다.
             } catch (error: CameraNotAvailableException) {
-                post { listener.onTapFailure("Camera is not available. Close other camera apps and resume AR Yardstick.") }
+                post { listener.onTapFailure("카메라를 사용할 수 없습니다. 다른 카메라 앱을 닫고 AR Yardstick을 다시 열어 보세요.") }
             } catch (error: Throwable) {
-                post { listener.onTapFailure("AR frame failed: ${error.message ?: error.javaClass.simpleName}") }
+                post { listener.onTapFailure("AR 프레임 처리 실패: ${error.message ?: error.javaClass.simpleName}") }
             }
         }
 
@@ -240,7 +240,7 @@ class ArSessionManager(
             while (true) {
                 val tap = pendingTaps.poll() ?: break
                 if (camera.trackingState != TrackingState.TRACKING) {
-                    post { listener.onTapFailure("Camera is not tracking yet. Move slowly and aim at a textured surface.") }
+                    post { listener.onTapFailure("아직 카메라 추적이 안정적이지 않습니다. 질감이 있는 표면을 향해 천천히 움직이세요.") }
                     continue
                 }
 
@@ -251,16 +251,16 @@ class ArSessionManager(
 
                 if (chosen == null) {
                     val message = if (snapshot.trackedPlaneCount == 0) {
-                        "Plane not detected yet. Move slowly until a surface is found."
+                        "아직 평면을 찾지 못했습니다. 표면을 찾을 때까지 천천히 움직이세요."
                     } else {
-                        "Hit test failed. Tap a detected surface."
+                        "히트 테스트에 실패했습니다. 감지된 표면을 탭하세요."
                     }
                     post { listener.onTapFailure(message) }
                     continue
                 }
 
                 if (!isInsideCameraView(snapshot, chosen.point.position)) {
-                    post { listener.onTapFailure("Hit test failed outside the camera view. Try again.") }
+                    post { listener.onTapFailure("카메라 화면 밖에서 히트 테스트가 실패했습니다. 다시 시도하세요.") }
                     continue
                 }
 
@@ -420,7 +420,7 @@ class ArSessionManager(
             if (status[0] == 0) {
                 val message = GLES20.glGetProgramInfoLog(linkedProgram)
                 GLES20.glDeleteProgram(linkedProgram)
-                throw IllegalStateException("Could not link camera shader: $message")
+                throw IllegalStateException("카메라 셰이더 링크 실패: $message")
             }
             return linkedProgram
         }
@@ -434,7 +434,7 @@ class ArSessionManager(
             if (status[0] == 0) {
                 val message = GLES20.glGetShaderInfoLog(shader)
                 GLES20.glDeleteShader(shader)
-                throw IllegalStateException("Could not compile camera shader: $message")
+                throw IllegalStateException("카메라 셰이더 컴파일 실패: $message")
             }
             return shader
         }

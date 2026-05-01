@@ -3,9 +3,9 @@ package com.example.aryardstick
 import kotlin.math.sqrt
 
 enum class MeasurementMode(val label: String) {
-    LINE("Measure Line"),
-    CIRCLE("Measure Circle"),
-    REFERENCE("Reference Object")
+    LINE("선 측정"),
+    CIRCLE("원 측정"),
+    REFERENCE("기준 물체")
 }
 
 data class Vec3(val x: Float, val y: Float, val z: Float) {

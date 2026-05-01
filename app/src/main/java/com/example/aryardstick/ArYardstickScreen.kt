@@ -36,7 +36,7 @@ class ArYardstickScreen(context: Context) : FrameLayout(context) {
     private val blockingPanel = LinearLayout(context)
     private val blockingTitle = statusText(20f, Color.WHITE)
     private val blockingMessage = statusText(15f, Color.WHITE)
-    private val blockingRetryButton = controlButton("Retry AR") { onRetryAr?.invoke() }
+    private val blockingRetryButton = controlButton("AR 재시도") { onRetryAr?.invoke() }
     private lateinit var topStatusPanel: LinearLayout
     private lateinit var bottomControlsScrollView: HorizontalScrollView
 
@@ -67,7 +67,7 @@ class ArYardstickScreen(context: Context) : FrameLayout(context) {
     }
 
     fun render(engine: MeasurementEngine) {
-        modeText.text = "Mode: ${engine.mode.label}"
+        modeText.text = "모드: ${engine.mode.label}"
         measurementText.text = engine.measurementLabel()
         calibrationText.text = engine.calibrationLabel()
         overlay.measurement = engine.currentMeasurement
@@ -76,10 +76,10 @@ class ArYardstickScreen(context: Context) : FrameLayout(context) {
 
     fun updateFrame(snapshot: CameraFrameSnapshot) {
         overlay.frameSnapshot = snapshot
-        val trackingLabel = if (snapshot.isTracking) "tracking" else "not tracking"
+        val trackingLabel = if (snapshot.isTracking) "추적 중" else "추적 안 됨"
         trackingText.text = String.format(
             Locale.US,
-            "AR: %s - planes %d - FOV %.0fdeg x %.0fdeg",
+            "AR: %s - 평면 %d개 - 시야각 %.0f도 x %.0f도",
             trackingLabel,
             snapshot.trackedPlaneCount,
             snapshot.horizontalFovDegrees,
@@ -135,11 +135,11 @@ class ArYardstickScreen(context: Context) : FrameLayout(context) {
             setPadding(dp(10), 0, dp(10), 0)
         }
 
-        controls.addView(controlButton("Clear") { onClear?.invoke() })
-        controls.addView(controlButton("Measure Line") { onLineMode?.invoke() })
-        controls.addView(controlButton("Measure Circle") { onCircleMode?.invoke() })
-        controls.addView(controlButton("Reference Object") { onReferenceMode?.invoke() })
-        controls.addView(controlButton("Capture") { onCapture?.invoke() })
+        controls.addView(controlButton("지우기") { onClear?.invoke() })
+        controls.addView(controlButton("선 측정") { onLineMode?.invoke() })
+        controls.addView(controlButton("원 측정") { onCircleMode?.invoke() })
+        controls.addView(controlButton("기준 물체") { onReferenceMode?.invoke() })
+        controls.addView(controlButton("캡처") { onCapture?.invoke() })
         scrollView.addView(controls)
         return scrollView
     }

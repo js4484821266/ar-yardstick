@@ -5,8 +5,8 @@ enum class ReferenceObjectType(
     val widthMeters: Float,
     val heightMeters: Float
 ) {
-    CREDIT_CARD("Credit card", 0.08560f, 0.05398f),
-    A4_PAPER("A4 paper", 0.210f, 0.297f)
+    CREDIT_CARD("신용카드", 0.08560f, 0.05398f),
+    A4_PAPER("A4 용지", 0.210f, 0.297f)
 }
 
 data class KnownReferenceEdge(
@@ -18,10 +18,10 @@ data class KnownReferenceEdge(
 
     companion object {
         fun supportedEdges(): List<KnownReferenceEdge> = listOf(
-            KnownReferenceEdge(ReferenceObjectType.CREDIT_CARD, "long edge (85.60mm)", ReferenceObjectType.CREDIT_CARD.widthMeters),
-            KnownReferenceEdge(ReferenceObjectType.CREDIT_CARD, "short edge (53.98mm)", ReferenceObjectType.CREDIT_CARD.heightMeters),
-            KnownReferenceEdge(ReferenceObjectType.A4_PAPER, "long edge (297mm)", ReferenceObjectType.A4_PAPER.heightMeters),
-            KnownReferenceEdge(ReferenceObjectType.A4_PAPER, "short edge (210mm)", ReferenceObjectType.A4_PAPER.widthMeters)
+            KnownReferenceEdge(ReferenceObjectType.CREDIT_CARD, "긴 변 (85.60mm)", ReferenceObjectType.CREDIT_CARD.widthMeters),
+            KnownReferenceEdge(ReferenceObjectType.CREDIT_CARD, "짧은 변 (53.98mm)", ReferenceObjectType.CREDIT_CARD.heightMeters),
+            KnownReferenceEdge(ReferenceObjectType.A4_PAPER, "긴 변 (297mm)", ReferenceObjectType.A4_PAPER.heightMeters),
+            KnownReferenceEdge(ReferenceObjectType.A4_PAPER, "짧은 변 (210mm)", ReferenceObjectType.A4_PAPER.widthMeters)
         )
     }
 }
@@ -43,8 +43,8 @@ class NoOpReferenceObjectDetector : ReferenceObjectDetector {
 
 class ManualReferenceObjectCalibrator {
     fun calculateCorrectionFactor(knownLengthMeters: Float, measuredLengthMeters: Float): Float {
-        require(knownLengthMeters > 0f) { "Known reference length must be positive." }
-        require(measuredLengthMeters > 0.001f) { "Measured reference edge is too small." }
+        require(knownLengthMeters > 0f) { "기준 길이는 0보다 커야 합니다." }
+        require(measuredLengthMeters > 0.001f) { "측정한 기준 변이 너무 짧습니다." }
         return knownLengthMeters / measuredLengthMeters
     }
 }

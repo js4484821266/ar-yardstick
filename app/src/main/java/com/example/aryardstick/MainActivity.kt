@@ -27,10 +27,10 @@ class MainActivity : Activity(), ArSessionManager.Listener {
         arSessionManager = ArSessionManager(this, screen.surfaceView, this)
         bindControls()
         screen.render(measurementEngine)
-        screen.showArAvailability("ARCore: checking support...")
+        screen.showArAvailability("ARCore: 지원 여부 확인 중...")
         screen.showBlockingMessage(
-            "Checking ARCore",
-            "Checking whether this device can run AR measurement."
+            "ARCore 확인 중",
+            "이 기기에서 AR 측정을 실행할 수 있는지 확인하고 있습니다."
         )
         screen.showMessage(measurementEngine.promptForCurrentMode())
     }
@@ -65,10 +65,10 @@ class MainActivity : Activity(), ArSessionManager.Listener {
             ensureCameraAndStartAr()
         } else if (requestCode == PermissionUtils.CameraRequestCode) {
             screen.showBlockingMessage(
-                "Camera Permission Missing",
-                "AR Yardstick needs camera permission to run ARCore hit tests and measure world-space points."
+                "카메라 권한 없음",
+                "AR Yardstick은 ARCore 히트 테스트와 월드 좌표 측정을 위해 카메라 권한이 필요합니다."
             )
-            screen.showMessage("Camera permission missing.", isError = true)
+            screen.showMessage("카메라 권한이 없습니다.", isError = true)
         }
     }
 
@@ -83,32 +83,32 @@ class MainActivity : Activity(), ArSessionManager.Listener {
     }
 
     override fun onTapFailure(message: String) {
-        if (message.startsWith("ARCore failed during:") || message.startsWith("Failed during:")) {
-            screen.showArAvailability("ARCore: supported, camera session failed", isError = true)
-            screen.showBlockingMessage("AR Camera Failed", message, showRetry = true)
+        if (message.startsWith("ARCore 실패 단계:") || message.startsWith("실패 단계:")) {
+            screen.showArAvailability("ARCore: 지원됨, 카메라 세션 실패", isError = true)
+            screen.showBlockingMessage("AR 카메라 실패", message, showRetry = true)
         }
         screen.showMessage(message, isError = true)
     }
 
     override fun onSessionMessage(message: String) {
         when (message) {
-            "Checking ARCore install",
-            "Creating AR session",
-            "Configuring minimal AR session",
-            "Starting AR camera session",
-            "Resuming AR view" -> {
-                screen.showArAvailability("ARCore: supported, camera session not started")
+            "ARCore 설치 확인 중",
+            "AR 세션 생성 중",
+            "최소 AR 세션 설정 중",
+            "AR 카메라 세션 시작 중",
+            "AR 화면 재개 중" -> {
+                screen.showArAvailability("ARCore: 지원됨, 카메라 세션 시작 전")
             }
-            "Move the phone slowly until ARCore detects a plane." -> {
-                screen.showArAvailability("ARCore: camera session running")
+            "ARCore가 평면을 찾을 때까지 휴대폰을 천천히 움직이세요." -> {
+                screen.showArAvailability("ARCore: 카메라 세션 실행 중")
             }
         }
         screen.showMessage(message)
     }
 
     override fun onSessionUnsupported(message: String) {
-        screen.showArAvailability("ARCore: unavailable", isError = true)
-        screen.showBlockingMessage("ARCore Unavailable", message)
+        screen.showArAvailability("ARCore: 사용할 수 없음", isError = true)
+        screen.showBlockingMessage("ARCore 사용 불가", message)
         screen.showMessage(message, isError = true)
     }
 
@@ -136,16 +136,16 @@ class MainActivity : Activity(), ArSessionManager.Listener {
         }
         screen.onRetryAr = {
             screen.hideBlockingMessage()
-            screen.showArAvailability("ARCore: retrying camera session...")
-            screen.showMessage("Retrying AR camera session...")
+            screen.showArAvailability("ARCore: 카메라 세션 재시도 중...")
+            screen.showMessage("AR 카메라 세션을 다시 시도합니다...")
             arSessionManager.retry()
         }
         screen.onArTap = { x, y ->
             if (!PermissionUtils.hasCameraPermission(this)) {
-                screen.showMessage("Camera permission missing.", isError = true)
+                screen.showMessage("카메라 권한이 없습니다.", isError = true)
                 PermissionUtils.requestCameraPermission(this)
             } else {
-                screen.showMessage("Running AR hit test...")
+                screen.showMessage("AR 히트 테스트 실행 중...")
                 arSessionManager.queueTap(x, y, measurementEngine.preferredPlaneId)
             }
         }
@@ -158,53 +158,53 @@ class MainActivity : Activity(), ArSessionManager.Listener {
         screen.showArAvailability(arAvailabilityMessage(availability), isError = !availability.isSupported && !availability.isTransient)
         when {
             availability.isTransient -> {
-                screen.showMessage("Checking ARCore availability...")
+                screen.showMessage("ARCore 지원 여부 확인 중...")
                 mainHandler.postDelayed({ ensureCameraAndStartAr() }, 500L)
                 return
             }
             availability == ArCoreApk.Availability.UNKNOWN_TIMED_OUT ||
                 availability == ArCoreApk.Availability.UNKNOWN_ERROR -> {
                 screen.showBlockingMessage(
-                    "ARCore Check Failed",
-                    "Could not determine ARCore support. Check Google Play Services for AR and try again."
+                    "ARCore 확인 실패",
+                    "ARCore 지원 여부를 확인하지 못했습니다. Google Play Services for AR을 확인한 뒤 다시 시도하세요."
                 )
                 screen.showMessage(arAvailabilityMessage(availability), isError = true)
                 return
             }
             !availability.isSupported -> {
                 screen.showBlockingMessage(
-                    "ARCore Unavailable",
-                    "This device does not support Google Play Services for AR. Measurement is not available."
+                    "ARCore 사용 불가",
+                    "이 기기는 Google Play Services for AR을 지원하지 않습니다. 측정을 사용할 수 없습니다."
                 )
-                screen.showMessage("ARCore unavailable on this device.", isError = true)
+                screen.showMessage("이 기기에서는 ARCore를 사용할 수 없습니다.", isError = true)
                 return
             }
         }
 
         if (!PermissionUtils.hasCameraPermission(this)) {
             screen.showBlockingMessage(
-                "ARCore Supported",
-                "AR measurement is available on this device. Grant camera permission to start."
+                "ARCore 지원됨",
+                "이 기기에서 AR 측정을 사용할 수 있습니다. 시작하려면 카메라 권한을 허용하세요."
             )
-            screen.showMessage("ARCore supported. Waiting for camera permission.")
+            screen.showMessage("ARCore가 지원됩니다. 카메라 권한을 기다리는 중입니다.")
             PermissionUtils.requestCameraPermission(this)
             return
         }
 
-        screen.showArAvailability("ARCore: supported, camera session not started")
+        screen.showArAvailability("ARCore: 지원됨, 카메라 세션 시작 전")
         screen.hideBlockingMessage()
         arSessionManager.onResume()
     }
 
     private fun arAvailabilityMessage(availability: ArCoreApk.Availability): String {
         return when (availability) {
-            ArCoreApk.Availability.SUPPORTED_INSTALLED -> "ARCore: supported and installed"
-            ArCoreApk.Availability.SUPPORTED_APK_TOO_OLD -> "ARCore: supported, AR service update needed"
-            ArCoreApk.Availability.SUPPORTED_NOT_INSTALLED -> "ARCore: supported, AR service install needed"
-            ArCoreApk.Availability.UNKNOWN_CHECKING -> "ARCore: checking support..."
-            ArCoreApk.Availability.UNKNOWN_TIMED_OUT -> "ARCore: support check timed out"
-            ArCoreApk.Availability.UNKNOWN_ERROR -> "ARCore: support check failed"
-            ArCoreApk.Availability.UNSUPPORTED_DEVICE_NOT_CAPABLE -> "ARCore: not supported on this device"
+            ArCoreApk.Availability.SUPPORTED_INSTALLED -> "ARCore: 지원됨, 설치됨"
+            ArCoreApk.Availability.SUPPORTED_APK_TOO_OLD -> "ARCore: 지원됨, AR 서비스 업데이트 필요"
+            ArCoreApk.Availability.SUPPORTED_NOT_INSTALLED -> "ARCore: 지원됨, AR 서비스 설치 필요"
+            ArCoreApk.Availability.UNKNOWN_CHECKING -> "ARCore: 지원 여부 확인 중..."
+            ArCoreApk.Availability.UNKNOWN_TIMED_OUT -> "ARCore: 지원 확인 시간 초과"
+            ArCoreApk.Availability.UNKNOWN_ERROR -> "ARCore: 지원 확인 실패"
+            ArCoreApk.Availability.UNSUPPORTED_DEVICE_NOT_CAPABLE -> "ARCore: 이 기기에서 지원되지 않음"
         }
     }
 
@@ -212,25 +212,25 @@ class MainActivity : Activity(), ArSessionManager.Listener {
         val edges = KnownReferenceEdge.supportedEdges()
         val labels = edges.map { it.label }.toTypedArray()
         val automaticStatus = if (referenceDetector.isAutomaticDetectionAvailable) {
-            "Automatic detection is available."
+            "자동 감지를 사용할 수 있습니다."
         } else {
-            "Automatic detection is not implemented. Manual edge calibration is available."
+            "자동 감지는 아직 구현되지 않았습니다. 수동 변 보정은 사용할 수 있습니다."
         }
 
         AlertDialog.Builder(this)
-            .setTitle("Reference Object")
+            .setTitle("기준 물체")
             .setMessage(automaticStatus)
             .setItems(labels) { _, which ->
                 val update = measurementEngine.startReferenceCalibration(edges[which])
                 screen.render(measurementEngine)
                 screen.showMessage(update.message)
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton("취소", null)
             .show()
     }
 
     private fun captureCurrentView() {
-        screen.showMessage("Saving capture...")
+        screen.showMessage("캡처 저장 중...")
         ScreenshotSaver.captureAndSave(this, screen) { result ->
             result.fold(
                 onSuccess = { capture ->
@@ -239,7 +239,7 @@ class MainActivity : Activity(), ArSessionManager.Listener {
                     Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
                 },
                 onFailure = { error ->
-                    val message = "Capture failed: ${error.message ?: error.javaClass.simpleName}"
+                    val message = "캡처 실패: ${error.message ?: error.javaClass.simpleName}"
                     screen.showMessage(message, isError = true)
                     Toast.makeText(this, message, Toast.LENGTH_LONG).show()
                 }

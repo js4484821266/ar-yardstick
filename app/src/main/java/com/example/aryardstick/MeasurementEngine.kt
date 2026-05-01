@@ -43,7 +43,7 @@ class MeasurementEngine(
         pendingPoints.clear()
         currentMeasurement = null
         selectedReferenceEdge = null
-        return EngineUpdate("Measurement cleared.")
+        return EngineUpdate("측정을 지웠습니다.")
     }
 
     fun startReferenceCalibration(edge: KnownReferenceEdge): EngineUpdate {
@@ -51,7 +51,7 @@ class MeasurementEngine(
         selectedReferenceEdge = edge
         pendingPoints.clear()
         currentMeasurement = null
-        return EngineUpdate("Reference mode: tap the two endpoints of ${edge.label}.")
+        return EngineUpdate("기준 물체 모드: ${edge.label}의 양 끝점을 탭하세요.")
     }
 
     fun addPoint(point: WorldPoint): EngineUpdate {
@@ -63,36 +63,36 @@ class MeasurementEngine(
     }
 
     fun measurementLabel(): String = when (val measurement = currentMeasurement) {
-        is Measurement.Line -> "Line: ${formatDistance(measurement.rawDistanceMeters)}"
+        is Measurement.Line -> "선: ${formatDistance(measurement.rawDistanceMeters)}"
         is Measurement.Circle -> {
-            "Circle: D ${formatDistance(measurement.rawDiameterMeters)}, C ${formatDistance(measurement.rawCircumferenceMeters)}"
+            "원: 지름 ${formatDistance(measurement.rawDiameterMeters)}, 둘레 ${formatDistance(measurement.rawCircumferenceMeters)}"
         }
-        null -> "No measurement"
+        null -> "측정 없음"
     }
 
     fun overlayLabel(): String = when (val measurement = currentMeasurement) {
         is Measurement.Line -> formatDistance(measurement.rawDistanceMeters)
-        is Measurement.Circle -> "D ${formatDistance(measurement.rawDiameterMeters)}"
+        is Measurement.Circle -> "지름 ${formatDistance(measurement.rawDiameterMeters)}"
         null -> ""
     }
 
     fun calibrationLabel(): String {
-        val source = calibrationState.sourceLabel ?: "manual calibration not set"
-        return "Calibration: $source (${String.format(Locale.US, "%.4fx", calibrationState.correctionFactor)})"
+        val source = calibrationState.sourceLabel ?: "수동 보정 안 됨"
+        return "보정: $source (${String.format(Locale.US, "%.4fx", calibrationState.correctionFactor)})"
     }
 
     fun promptForCurrentMode(): String = when (mode) {
         MeasurementMode.LINE -> when (pendingPoints.size) {
-            0 -> "Line mode: tap the first point."
-            else -> "Line mode: tap the second point."
+            0 -> "선 측정 모드: 첫 번째 점을 탭하세요."
+            else -> "선 측정 모드: 두 번째 점을 탭하세요."
         }
-        MeasurementMode.CIRCLE -> "Circle mode: tap ${pendingPoints.size + 1} of 3 points."
+        MeasurementMode.CIRCLE -> "원 측정 모드: 3개 점 중 ${pendingPoints.size + 1}번째 점을 탭하세요."
         MeasurementMode.REFERENCE -> {
             val edge = selectedReferenceEdge
             if (edge == null) {
-                "Reference mode: choose a reference object edge."
+                "기준 물체 모드: 기준 물체의 변을 선택하세요."
             } else {
-                "Reference mode: tap endpoint ${pendingPoints.size + 1} of 2 for ${edge.label}."
+                "기준 물체 모드: ${edge.label}의 끝점 ${pendingPoints.size + 1}/2를 탭하세요."
             }
         }
     }
@@ -110,39 +110,39 @@ class MeasurementEngine(
         if (pendingPoints.size == 2) pendingPoints.clear()
         pendingPoints += point
         if (pendingPoints.size < 2) {
-            return EngineUpdate("Line mode: tap the second point.")
+            return EngineUpdate("선 측정 모드: 두 번째 점을 탭하세요.")
         }
 
         val measurement = Measurement.Line(pendingPoints[0], pendingPoints[1])
         currentMeasurement = measurement
         pendingPoints.clear()
-        return EngineUpdate("Line measured: ${formatDistance(measurement.rawDistanceMeters)}.")
+        return EngineUpdate("선을 측정했습니다: ${formatDistance(measurement.rawDistanceMeters)}.")
     }
 
     private fun addCirclePoint(point: WorldPoint): EngineUpdate {
         if (pendingPoints.size == 3) pendingPoints.clear()
         pendingPoints += point
         if (pendingPoints.size < 3) {
-            return EngineUpdate("Circle mode: tap ${pendingPoints.size + 1} of 3 points.")
+            return EngineUpdate("원 측정 모드: 3개 점 중 ${pendingPoints.size + 1}번째 점을 탭하세요.")
         }
 
         val measurement = calculateCircle(pendingPoints.toList())
         pendingPoints.clear()
         return if (measurement == null) {
-            EngineUpdate("Circle points are nearly collinear. Choose three wider-spaced points.", isError = true)
+            EngineUpdate("원 점들이 거의 한 줄에 있습니다. 더 넓게 떨어진 세 점을 다시 선택하세요.", isError = true)
         } else {
             currentMeasurement = measurement
-            EngineUpdate("Circle estimated: diameter ${formatDistance(measurement.rawDiameterMeters)}.")
+            EngineUpdate("원을 추정했습니다: 지름 ${formatDistance(measurement.rawDiameterMeters)}.")
         }
     }
 
     private fun addReferencePoint(point: WorldPoint): EngineUpdate {
         val edge = selectedReferenceEdge
-            ?: return EngineUpdate("Choose Credit Card or A4 before marking a reference edge.", isError = true)
+            ?: return EngineUpdate("기준 변을 표시하기 전에 신용카드 또는 A4를 선택하세요.", isError = true)
 
         pendingPoints += point
         if (pendingPoints.size < 2) {
-            return EngineUpdate("Reference mode: tap the second endpoint of ${edge.label}.")
+            return EngineUpdate("기준 물체 모드: ${edge.label}의 두 번째 끝점을 탭하세요.")
         }
 
         val measuredLength = pendingPoints[0].position.distanceTo(pendingPoints[1].position)
@@ -151,9 +151,9 @@ class MeasurementEngine(
         return try {
             val factor = manualCalibrator.calculateCorrectionFactor(edge.lengthMeters, measuredLength)
             calibrationState = CalibrationState(factor, edge.label)
-            EngineUpdate("Calibration saved: ${edge.label}, correction ${String.format(Locale.US, "%.4fx", factor)}.")
+            EngineUpdate("보정을 저장했습니다: ${edge.label}, 보정값 ${String.format(Locale.US, "%.4fx", factor)}.")
         } catch (error: IllegalArgumentException) {
-            EngineUpdate("Calibration failed: ${error.message}", isError = true)
+            EngineUpdate("보정 실패: ${error.message}", isError = true)
         }
     }
 

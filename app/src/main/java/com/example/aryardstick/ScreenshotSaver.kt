@@ -29,7 +29,7 @@ object ScreenshotSaver {
         onComplete: (Result<CaptureResult>) -> Unit
     ) {
         if (sourceView.width <= 0 || sourceView.height <= 0) {
-            onComplete(Result.failure(IllegalStateException("Capture failed: view is not ready.")))
+            onComplete(Result.failure(IllegalStateException("캡처 실패: 화면이 아직 준비되지 않았습니다.")))
             return
         }
 
@@ -49,11 +49,11 @@ object ScreenshotSaver {
             PixelCopy.request(activity.window, srcRect, bitmap, { copyResult ->
                 try {
                     if (copyResult != PixelCopy.SUCCESS) {
-                        throw IOException("Pixel copy failed with code $copyResult.")
+                        throw IOException("픽셀 복사 실패 코드: $copyResult")
                     }
                     val uri = saveBitmap(activity, bitmap)
                     Handler(Looper.getMainLooper()).post {
-                        onComplete(Result.success(CaptureResult(uri, "Capture saved.")))
+                        onComplete(Result.success(CaptureResult(uri, "캡처를 저장했습니다.")))
                     }
                 } catch (error: Exception) {
                     Handler(Looper.getMainLooper()).post {
@@ -82,14 +82,14 @@ object ScreenshotSaver {
         }
 
         val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
-            ?: throw IOException("MediaStore insert returned no Uri.")
+            ?: throw IOException("MediaStore가 Uri를 반환하지 않았습니다.")
 
         try {
             resolver.openOutputStream(uri)?.use { stream ->
                 if (!bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)) {
-                    throw IOException("Bitmap compression failed.")
+                    throw IOException("비트맵 압축에 실패했습니다.")
                 }
-            } ?: throw IOException("Could not open MediaStore output stream.")
+            } ?: throw IOException("MediaStore 출력 스트림을 열 수 없습니다.")
 
             values.clear()
             values.put(MediaStore.Images.Media.IS_PENDING, 0)
