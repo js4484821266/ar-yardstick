@@ -27,6 +27,11 @@ class MainActivity : Activity(), ArSessionManager.Listener {
         arSessionManager = ArSessionManager(this, screen.surfaceView, this)
         bindControls()
         screen.render(measurementEngine)
+        screen.showArAvailability("ARCore: checking support...")
+        screen.showBlockingMessage(
+            "Checking ARCore",
+            "Checking whether this device can run AR measurement."
+        )
         screen.showMessage(measurementEngine.promptForCurrentMode())
     }
 
@@ -86,6 +91,7 @@ class MainActivity : Activity(), ArSessionManager.Listener {
     }
 
     override fun onSessionUnsupported(message: String) {
+        screen.showArAvailability("ARCore: unavailable", isError = true)
         screen.showBlockingMessage("ARCore Unavailable", message)
         screen.showMessage(message, isError = true)
     }
@@ -126,32 +132,56 @@ class MainActivity : Activity(), ArSessionManager.Listener {
     private fun ensureCameraAndStartAr() {
         if (!isActivityResumed) return
 
-        if (!PermissionUtils.hasCameraPermission(this)) {
-            screen.showBlockingMessage(
-                "Camera Permission",
-                "Grant camera permission to start AR measurement."
-            )
-            PermissionUtils.requestCameraPermission(this)
-            return
-        }
-
         val availability = arSessionManager.checkAvailability()
+        screen.showArAvailability(arAvailabilityMessage(availability), isError = !availability.isSupported && !availability.isTransient)
         when {
             availability.isTransient -> {
                 screen.showMessage("Checking ARCore availability...")
                 mainHandler.postDelayed({ ensureCameraAndStartAr() }, 500L)
+                return
             }
-            availability.isSupported -> {
-                screen.hideBlockingMessage()
-                arSessionManager.onResume()
+            availability == ArCoreApk.Availability.UNKNOWN_TIMED_OUT ||
+                availability == ArCoreApk.Availability.UNKNOWN_ERROR -> {
+                screen.showBlockingMessage(
+                    "ARCore Check Failed",
+                    "Could not determine ARCore support. Check Google Play Services for AR and try again."
+                )
+                screen.showMessage(arAvailabilityMessage(availability), isError = true)
+                return
             }
-            else -> {
+            !availability.isSupported -> {
                 screen.showBlockingMessage(
                     "ARCore Unavailable",
                     "This device does not support Google Play Services for AR. Measurement is not available."
                 )
                 screen.showMessage("ARCore unavailable on this device.", isError = true)
+                return
             }
+        }
+
+        if (!PermissionUtils.hasCameraPermission(this)) {
+            screen.showBlockingMessage(
+                "ARCore Supported",
+                "AR measurement is available on this device. Grant camera permission to start."
+            )
+            screen.showMessage("ARCore supported. Waiting for camera permission.")
+            PermissionUtils.requestCameraPermission(this)
+            return
+        }
+
+        screen.hideBlockingMessage()
+        arSessionManager.onResume()
+    }
+
+    private fun arAvailabilityMessage(availability: ArCoreApk.Availability): String {
+        return when (availability) {
+            ArCoreApk.Availability.SUPPORTED_INSTALLED -> "ARCore: supported and installed"
+            ArCoreApk.Availability.SUPPORTED_APK_TOO_OLD -> "ARCore: supported, AR service update needed"
+            ArCoreApk.Availability.SUPPORTED_NOT_INSTALLED -> "ARCore: supported, AR service install needed"
+            ArCoreApk.Availability.UNKNOWN_CHECKING -> "ARCore: checking support..."
+            ArCoreApk.Availability.UNKNOWN_TIMED_OUT -> "ARCore: support check timed out"
+            ArCoreApk.Availability.UNKNOWN_ERROR -> "ARCore: support check failed"
+            ArCoreApk.Availability.UNSUPPORTED_DEVICE_NOT_CAPABLE -> "ARCore: not supported on this device"
         }
     }
 

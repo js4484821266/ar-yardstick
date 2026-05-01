@@ -21,6 +21,7 @@ import com.google.ar.core.Trackable
 import com.google.ar.core.TrackingState
 import com.google.ar.core.Config as ArConfig
 import com.google.ar.core.exceptions.CameraNotAvailableException
+import com.google.ar.core.exceptions.SessionPausedException
 import com.google.ar.core.exceptions.UnavailableApkTooOldException
 import com.google.ar.core.exceptions.UnavailableArcoreNotInstalledException
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException
@@ -111,6 +112,8 @@ class ArSessionManager(
             listener.onSessionUnsupported("ARCore is unavailable on this device.")
         } catch (error: CameraNotAvailableException) {
             listener.onTapFailure("Camera is not available. Close other camera apps and try again.")
+        } catch (error: Throwable) {
+            listener.onTapFailure("Failed to start AR session: ${error.message ?: error.javaClass.simpleName}")
         }
     }
 
@@ -192,6 +195,8 @@ class ArSessionManager(
                 val snapshot = createSnapshot(activeSession, frame, camera)
                 post { listener.onFrame(snapshot) }
                 processTaps(frame, camera, snapshot)
+            } catch (error: SessionPausedException) {
+                // Session not yet resumed, skip this frame
             } catch (error: CameraNotAvailableException) {
                 post { listener.onTapFailure("Camera is not available. Close other camera apps and resume AR Yardstick.") }
             } catch (error: Throwable) {

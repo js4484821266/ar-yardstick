@@ -7,6 +7,7 @@ import android.opengl.GLSurfaceView
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
+import android.view.WindowInsets
 import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.HorizontalScrollView
@@ -25,6 +26,7 @@ class ArYardstickScreen(context: Context) : FrameLayout(context) {
     var onCapture: (() -> Unit)? = null
     var onArTap: ((Float, Float) -> Unit)? = null
 
+    private val arAvailabilityText = statusText(16f, Color.rgb(180, 255, 220))
     private val modeText = statusText(15f, Color.WHITE)
     private val measurementText = statusText(15f, Color.WHITE)
     private val calibrationText = statusText(13f, Color.rgb(225, 245, 245))
@@ -33,6 +35,8 @@ class ArYardstickScreen(context: Context) : FrameLayout(context) {
     private val blockingPanel = LinearLayout(context)
     private val blockingTitle = statusText(20f, Color.WHITE)
     private val blockingMessage = statusText(15f, Color.WHITE)
+    private lateinit var topStatusPanel: LinearLayout
+    private lateinit var bottomControlsScrollView: HorizontalScrollView
 
     init {
         setBackgroundColor(Color.BLACK)
@@ -43,6 +47,7 @@ class ArYardstickScreen(context: Context) : FrameLayout(context) {
         addView(createTopStatusPanel(), topLayoutParams())
         addView(createBottomControls(), bottomLayoutParams())
         addView(createBlockingPanel(), LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
+        installSystemInsetsHandler()
 
         surfaceView.setOnTouchListener { _, event ->
             if (event.action == MotionEvent.ACTION_UP) {
@@ -52,6 +57,11 @@ class ArYardstickScreen(context: Context) : FrameLayout(context) {
                 true
             }
         }
+    }
+
+    fun showArAvailability(message: String, isError: Boolean = false) {
+        arAvailabilityText.setTextColor(if (isError) Color.rgb(255, 210, 140) else Color.rgb(180, 255, 220))
+        arAvailabilityText.text = message
     }
 
     fun render(engine: MeasurementEngine) {
@@ -99,6 +109,8 @@ class ArYardstickScreen(context: Context) : FrameLayout(context) {
                 cornerRadius = 0f
             }
         }
+        topStatusPanel = panel
+        panel.addView(arAvailabilityText)
         panel.addView(modeText)
         panel.addView(measurementText)
         panel.addView(calibrationText)
@@ -113,6 +125,7 @@ class ArYardstickScreen(context: Context) : FrameLayout(context) {
             setBackgroundColor(Color.argb(185, 0, 0, 0))
             setPadding(0, dp(8), 0, dp(8))
         }
+        bottomControlsScrollView = scrollView
         val controls = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
@@ -146,6 +159,32 @@ class ArYardstickScreen(context: Context) : FrameLayout(context) {
                 topMargin = dp(12)
             })
         }
+    }
+
+    private fun installSystemInsetsHandler() {
+        setOnApplyWindowInsetsListener { _, insets ->
+            val systemBars = insets.getInsets(WindowInsets.Type.systemBars())
+            topStatusPanel.setPadding(
+                dp(14) + systemBars.left,
+                dp(12) + systemBars.top,
+                dp(14) + systemBars.right,
+                dp(10)
+            )
+            bottomControlsScrollView.setPadding(
+                systemBars.left,
+                dp(8),
+                systemBars.right,
+                dp(8) + systemBars.bottom
+            )
+            blockingPanel.setPadding(
+                dp(24) + systemBars.left,
+                dp(24) + systemBars.top,
+                dp(24) + systemBars.right,
+                dp(24) + systemBars.bottom
+            )
+            insets
+        }
+        post { requestApplyInsets() }
     }
 
     private fun controlButton(label: String, action: () -> Unit): Button {

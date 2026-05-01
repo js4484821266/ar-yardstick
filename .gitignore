@@ -45,3 +45,6 @@ generated/
 *.swo
 .DS_Store
 Thumbs.db
+
+# ignore prompts
+prompts/*
