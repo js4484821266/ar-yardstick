@@ -21,6 +21,7 @@ Measurements are not calculated from 2D pixel distances alone. The app uses ARCo
 ## Limitations
 
 - ARCore is required for measurement. Unsupported devices show an unsupported-device screen.
+- ARCore support/install checks can pass even if the camera-backed AR session cannot start; the app reports that startup stage and allows retry.
 - Plane detection quality depends on device support, lighting, motion, and visible surface texture.
 - Automatic reference-object detection is not implemented. Manual edge calibration is functional and intentionally exposed as the supported calibration path.
 - Measurements are estimates and should not be used where certified precision is required.

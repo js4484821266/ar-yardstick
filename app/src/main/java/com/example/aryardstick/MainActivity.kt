@@ -83,10 +83,26 @@ class MainActivity : Activity(), ArSessionManager.Listener {
     }
 
     override fun onTapFailure(message: String) {
+        if (message.startsWith("ARCore failed during:") || message.startsWith("Failed during:")) {
+            screen.showArAvailability("ARCore: supported, camera session failed", isError = true)
+            screen.showBlockingMessage("AR Camera Failed", message, showRetry = true)
+        }
         screen.showMessage(message, isError = true)
     }
 
     override fun onSessionMessage(message: String) {
+        when (message) {
+            "Checking ARCore install",
+            "Creating AR session",
+            "Configuring minimal AR session",
+            "Starting AR camera session",
+            "Resuming AR view" -> {
+                screen.showArAvailability("ARCore: supported, camera session not started")
+            }
+            "Move the phone slowly until ARCore detects a plane." -> {
+                screen.showArAvailability("ARCore: camera session running")
+            }
+        }
         screen.showMessage(message)
     }
 
@@ -117,6 +133,12 @@ class MainActivity : Activity(), ArSessionManager.Listener {
         }
         screen.onCapture = {
             captureCurrentView()
+        }
+        screen.onRetryAr = {
+            screen.hideBlockingMessage()
+            screen.showArAvailability("ARCore: retrying camera session...")
+            screen.showMessage("Retrying AR camera session...")
+            arSessionManager.retry()
         }
         screen.onArTap = { x, y ->
             if (!PermissionUtils.hasCameraPermission(this)) {
@@ -169,6 +191,7 @@ class MainActivity : Activity(), ArSessionManager.Listener {
             return
         }
 
+        screen.showArAvailability("ARCore: supported, camera session not started")
         screen.hideBlockingMessage()
         arSessionManager.onResume()
     }

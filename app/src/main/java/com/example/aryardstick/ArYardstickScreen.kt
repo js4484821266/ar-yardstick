@@ -25,6 +25,7 @@ class ArYardstickScreen(context: Context) : FrameLayout(context) {
     var onReferenceMode: (() -> Unit)? = null
     var onCapture: (() -> Unit)? = null
     var onArTap: ((Float, Float) -> Unit)? = null
+    var onRetryAr: (() -> Unit)? = null
 
     private val arAvailabilityText = statusText(16f, Color.rgb(180, 255, 220))
     private val modeText = statusText(15f, Color.WHITE)
@@ -35,6 +36,7 @@ class ArYardstickScreen(context: Context) : FrameLayout(context) {
     private val blockingPanel = LinearLayout(context)
     private val blockingTitle = statusText(20f, Color.WHITE)
     private val blockingMessage = statusText(15f, Color.WHITE)
+    private val blockingRetryButton = controlButton("Retry AR") { onRetryAr?.invoke() }
     private lateinit var topStatusPanel: LinearLayout
     private lateinit var bottomControlsScrollView: HorizontalScrollView
 
@@ -90,9 +92,10 @@ class ArYardstickScreen(context: Context) : FrameLayout(context) {
         messageText.text = message
     }
 
-    fun showBlockingMessage(title: String, message: String) {
+    fun showBlockingMessage(title: String, message: String, showRetry: Boolean = false) {
         blockingTitle.text = title
         blockingMessage.text = message
+        blockingRetryButton.visibility = if (showRetry) View.VISIBLE else View.GONE
         blockingPanel.visibility = View.VISIBLE
     }
 
@@ -157,6 +160,13 @@ class ArYardstickScreen(context: Context) : FrameLayout(context) {
                 LinearLayout.LayoutParams.WRAP_CONTENT
             ).apply {
                 topMargin = dp(12)
+            })
+            blockingRetryButton.visibility = View.GONE
+            addView(blockingRetryButton, LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                topMargin = dp(18)
             })
         }
     }

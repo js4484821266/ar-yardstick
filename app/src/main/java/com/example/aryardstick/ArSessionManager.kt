@@ -21,6 +21,7 @@ import com.google.ar.core.Trackable
 import com.google.ar.core.TrackingState
 import com.google.ar.core.Config as ArConfig
 import com.google.ar.core.exceptions.CameraNotAvailableException
+import com.google.ar.core.exceptions.FatalException
 import com.google.ar.core.exceptions.SessionPausedException
 import com.google.ar.core.exceptions.UnavailableApkTooOldException
 import com.google.ar.core.exceptions.UnavailableArcoreNotInstalledException
@@ -54,6 +55,7 @@ class ArSessionManager(
     private val renderer = ArRenderer(activity, listener)
     private var session: Session? = null
     private var installRequested = false
+    private var startupStage = "idle"
 
     init {
         surfaceView.preserveEGLContextOnPause = true
@@ -74,6 +76,7 @@ class ArSessionManager(
 
         try {
             if (session == null) {
+                reportStartupStage("Checking ARCore install")
                 when (ArCoreApk.getInstance().requestInstall(activity, !installRequested)) {
                     ArCoreApk.InstallStatus.INSTALL_REQUESTED -> {
                         installRequested = true
@@ -83,22 +86,28 @@ class ArSessionManager(
                     ArCoreApk.InstallStatus.INSTALLED -> Unit
                 }
 
-                session = Session(activity).also { newSession ->
-                    val config = ArConfig(newSession).apply {
-                        planeFindingMode = ArConfig.PlaneFindingMode.HORIZONTAL_AND_VERTICAL
-                        updateMode = ArConfig.UpdateMode.LATEST_CAMERA_IMAGE
-                        focusMode = ArConfig.FocusMode.AUTO
-                        if (newSession.isDepthModeSupported(ArConfig.DepthMode.AUTOMATIC)) {
-                            depthMode = ArConfig.DepthMode.AUTOMATIC
-                        }
-                    }
-                    newSession.configure(config)
-                    renderer.setSession(newSession)
+                reportStartupStage("Creating AR session")
+                val newSession = Session(activity)
+                session = newSession
+                reportStartupStage("Configuring minimal AR session")
+                val config = ArConfig(newSession).apply {
+                    planeFindingMode = ArConfig.PlaneFindingMode.HORIZONTAL_AND_VERTICAL
+                    updateMode = ArConfig.UpdateMode.BLOCKING
+                    focusMode = ArConfig.FocusMode.FIXED
+                    // Depth is useful, but optional. Keep it off for the base app because
+                    // some ARCore-supported devices fail session startup with depth enabled.
+                    depthMode = ArConfig.DepthMode.DISABLED
+                    lightEstimationMode = ArConfig.LightEstimationMode.DISABLED
                 }
+                newSession.configure(config)
+                renderer.setSession(newSession)
             }
 
+            reportStartupStage("Starting AR camera session")
             session?.resume()
+            reportStartupStage("Resuming AR view")
             surfaceView.onResume()
+            startupStage = "AR camera session started"
             listener.onSessionMessage("Move the phone slowly until ARCore detects a plane.")
         } catch (error: UnavailableArcoreNotInstalledException) {
             listener.onSessionUnsupported("ARCore is not installed on this device.")
@@ -112,8 +121,15 @@ class ArSessionManager(
             listener.onSessionUnsupported("ARCore is unavailable on this device.")
         } catch (error: CameraNotAvailableException) {
             listener.onTapFailure("Camera is not available. Close other camera apps and try again.")
+        } catch (error: FatalException) {
+            closeSessionAfterFailure()
+            val cause = error.message?.let { " Detail: $it" } ?: ""
+            listener.onTapFailure(
+                "ARCore failed during: $startupStage. Tap Retry AR, update Google Play Services for AR, and make sure no other app is using the camera.$cause"
+            )
         } catch (error: Throwable) {
-            listener.onTapFailure("Failed to start AR session: ${error.message ?: error.javaClass.simpleName}")
+            closeSessionAfterFailure()
+            listener.onTapFailure("Failed during: $startupStage. ${error.message ?: error.javaClass.simpleName}")
         }
     }
 
@@ -126,6 +142,11 @@ class ArSessionManager(
         renderer.setSession(null)
         session?.close()
         session = null
+    }
+
+    fun retry() {
+        closeSessionAfterFailure()
+        onResume()
     }
 
     fun queueTap(x: Float, y: Float, preferredPlaneId: String?) {
@@ -142,6 +163,17 @@ class ArSessionManager(
         val point: WorldPoint,
         val trackable: Trackable
     )
+
+    private fun reportStartupStage(stage: String) {
+        startupStage = stage
+        listener.onSessionMessage(stage)
+    }
+
+    private fun closeSessionAfterFailure() {
+        renderer.setSession(null)
+        session?.close()
+        session = null
+    }
 
     private class ArRenderer(
         private val activity: Activity,
