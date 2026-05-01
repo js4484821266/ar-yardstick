@@ -1,0 +1,47 @@
+# Public-safe repository hygiene.
+# Keep source, docs, Gradle build scripts, and Gradle Wrapper files committed.
+!gradlew
+!gradlew.bat
+!gradle/wrapper/gradle-wrapper.properties
+!gradle/wrapper/gradle-wrapper.jar
+
+# Local machine configuration.
+local.properties
+.env
+.env.*
+LOCAL_BUILD.md
+*.local
+
+# Signing material and release secrets.
+*.jks
+*.keystore
+*.p12
+*.pem
+signing.properties
+signing-config.properties
+keystore.properties
+release.properties
+google-services.json
+secrets.properties
+credentials.properties
+keys.properties
+*api_key*
+*apikey*
+*secret*
+*token*
+
+# Gradle and Android generated outputs.
+.gradle/
+build/
+**/build/
+captures/
+generated/
+
+# IDE/user-specific files.
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
